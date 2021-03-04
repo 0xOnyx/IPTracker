@@ -1,0 +1,16 @@
+
+[www.google.com]
+[10 days]
+[custome url] -> /games/cyberpunk/apk/
+
+submit
+
+http://www.iptracker.xyz/games/cyberpunk/apk
+
+https://www.iptracker.xyz/games/cyberpunk/apk -> www.google.com
+https://www.iptracler.xyz/games/cyberpunk/apk/console -> notre console
+
+
+
+const test = 10 ? 1 : 0;
+const test = a  || "default";
