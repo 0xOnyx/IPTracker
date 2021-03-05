@@ -41,15 +41,23 @@ checkValide(url)
 
 
 app.get("/:TOKEN", (req, res, next)=>{
+  try{
+    let options = {}
+    options.redirect = await foundURL(req.path)
+
+  }
+  catch(error)
+  {
+    
   }
 
 
   console.log(`NEW USER IP => ${requestIp.getClientIp(req)} IS LANDING ON PAGE => ${req.url}`)
 
   con.query("SELECT FROM_URL FROM WHERE FROM_URL=?", req.path, (err, result, fields)=>{
-    if(err){return res.status(500).json({err: "error not url found"})}
-    if(!lenght){return res.status(500).json(err: "error not url found")}
-    if(!checkValide(result[0].ENDTIME)){return res.status.json({err: "error url not valide"})}
+    if(err){throw {err: "error not url found"}}
+    if(!lenght){throw {err: "error not url found"}}
+    if(!checkValide(result[0].ENDTIME)){throw {err: "error url not valide"}}
     res.status(200).json({url: result.TO_URL})
   })
 })
