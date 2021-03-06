@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>IP_logger</title>
+	<link href="style.css" rel="stylesheet" type="text/css" />
+
+
+</head>
+<h1>| IP Logger |</h1>
+
+
+
+<div>
+	<form action="/create/links">
+		<label for="L_Link">Link</label>
+    <input type="text" id="L_Link" name="Link" placeholder="The Link.."><br><br>
+
+    <label for="L_Custom">Custom URL</label>
+    <input type="text" id="L_Custom" name="Custom URL" placeholder="Your Custom URL.."><br><br>
+
+    <label for="L_fUpload_name">File Name</label>
+    <input type="text" id="L_fUpload_name" name="L_fUpload_name" placeholder="File Name..">
+
+    <input type="file"
+       id="avatar" name="avatar"
+       accept="image/png, image/jpeg"><br><br>
+
+    <label for="L_Time">Time</label>
+    <select id="L_Time" name="L_Time">
+      <option value="1_d">1 day</option>
+      <option value="3_d">3 days</option>
+      <option value="5_d">5 days</option>
+      <option value="10_d">10 days</option>
+      <option value="25_d">25 days</option>
+    </select><br><br>
+
+    |<input type="checkbox" id="L_cam" name="L_cam">
+    <label for="L_cam">Cam Screen |</label>
+    <input type="checkbox" id="L_gps" name="L_gps">
+    <label for="L_cam">GPS |</label>
+    <input type="checkbox" id="L_dehashed" name="L_dehashed">
+    <label for="L_dehashed">DEHASHED |</label>
+    <input type="checkbox" id="L_file" name="L_file">
+    <label for="L_file">File |</label>
+  
+    <input type="submit" value="Submit">
+  </form>
+  </div>
+    <p>By. Jeje720 & Leslato. (IP_logger © 2021).</p>
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+
+
+{
+  "redirection" :
+  {
+    "host": "name.xy",
+    "port": 80;
+  },
+  "console" : 
+  {
+    "host": "name.xy",
+    "port": 80;
+  }
+}

@@ -1,6 +1,6 @@
 
 body {
-  background-color:gray;
+  background-color: gray;
 }
 
 h1 {
@@ -15,17 +15,6 @@ p {
   font-size: 12px;
   text-align: center;
 }
-
-/* #L_Link{
- border: none;
-			outline: none;
-			background: none;
-			color: black;
-			font-size: 18px;
-			width: 80px;
-			margin: 0 10px;
- 
-} */
 
 input[type=text], select {
   width: 100%;
