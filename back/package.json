@@ -1,0 +1,31 @@
+{
+  "name": "iptracker",
+  "version": "1.0.0",
+  "description": "Simple ip tracker",
+  "main": "redirection.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeje720/IPTracker.git"
+  },
+  "keywords": [
+    "nodejs",
+    "ejs",
+    "js"
+  ],
+  "author": "jeje720",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jeje720/IPTracker/issues"
+  },
+  "homepage": "https://github.com/jeje720/IPTracker#readme",
+  "dependencies": {
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "mysql": "^2.18.1",
+    "request-ip": "^2.1.3",
+    "socket.io": "^3.1.2"
+  }
+}

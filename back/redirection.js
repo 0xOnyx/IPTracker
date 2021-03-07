@@ -2,41 +2,30 @@
 
 const express   = require("express")
 const http      = require("http")
-const https     = require("https")
 const requestIp = require("request-ip")
 const fs        = require("fs")
-const mysql     = require("mysql")
 const ejs       = require("ejs")
-const {Base64}  = require("js-Base64")
-const crypto    = require("crypot")
+const {con}     = require("./conf/mysql.js")
+const socketIO  = require("socket.io")
 
-let server = http.createServer()
 
-const conf = JSON.parse( fs.readFileSync("./conf.json") )
+
+const CONF = JSON.parse( fs.readFileSync("./conf.json") )
 
 /////////////////////////////////////////////
-//conf express
-let app = express()
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
-
-/*
-create table user(
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  IP VARCHAR(255) NOT NULL,
-)
+//conf express and socket.io
+let redirectApp = express()
+let consoleApp  = express()
 
 
-create table redirect(
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  FROM_URL VARCHAR(255) NOT NULL,
-  TO_URL VARCHAR(255) NOT NULL,
-  ENDTIME TIMESTAMP NOTNULL,
-  UUID VARCHAR(255) NOT NULL,
-)
-*/
 
 
+http.createServer(redirectApp).listen(CONF.redirect.port)
+//https ?
+
+let server = http.createServer(consoleApp).listen(CONF.console.port)
+//socket IO
+let io = socketIO.listen(server)
 
 
 checkValide(url)
@@ -45,39 +34,44 @@ checkValide(url)
   return ( Date.now() - date ) 
 }
 
-function createTMPlink(req){
+function getLinks(req){
   return new Promise((resolve, reject)=>{
   
     let options = {
       redirect : "",
       sendLinks: "",
+      time: 1000,
     }
 
 
     console.log(`NEW USER IP => ${requestIp.getClientIp(req)} IS LANDING ON PAGE => ${req.url}`)
-    //let token = crypto.randomByetes(50).toString("hex")
 
-    con.query("SELECT FROM_URL FROM WHERE FROM_URL=?", req.path, (err, result, fields)=>{
+    io.emit("NewConnection", {ip: requestIp.getClientIp(req), url: req.originalUrl})
+
+    con.query("SELECT TO_URL FROM WHERE FROM_URL=?", req.path, (err, result, fields)=>{
       
       //ERROR CHECK
       if(err){reject( {err: "error not url found"})}
-      if(!lenght){reject({err: "error not url found"})}
+      if(!result.lenght){reject({err: "error not url found"})}
       if(!checkValide(result[0].ENDTIME)){reject({err: "error url not valide"})}
       
       //SUCCESS 
-      options.redirect = result.TO_URL
+      options.TIME = result[0].TIME
+      options.redirect = result[0].TO_URL
 
-      let url = `http://${conf.console.host}:${conf.console.port}/send/${result.UUID}`
+      let url = `http://${CONF.console.host}:${CONF.console.port}/send/${result.UUID}`
       options.sendLinks = url
+      
+      resolve(options)
     })
 
-    resolve(options)
+
 
   })
 }
 
 
-app.get("/:TOKEN", async (req, res, next)=>{
+redirectApp.use(async (req, res)=>{
   try{
     let options = await getLinks(req)
     
@@ -85,26 +79,110 @@ app.get("/:TOKEN", async (req, res, next)=>{
   }
   catch(error)
   {
-    
+    res.redirect(CONF.redirect.default)
   }
-
-
-
- 
 })
 
 
 
-////possibilité ??? a check merci => 
-//https://developer.mozilla.org/fr/docs/Web/API/Window
-//https://www.w3schools.com/js/js_window.asp
-app.post("/user/info", (req, res, next)=>{
-  let user = {
-    date = New Date();
-    ip   = requestIp.getClientIp(req) || "NULL";
-    navigator = req.body.navigator || "NULL";    //window.navigator.appVersion
-    os = req.body.os || "NULL"; //windows.navigator.platform
+//////////////////////////////////////////
+///Console 
 
+const {checkIp} = require("./tools/checkIP.js")
+
+consoleApp.use(express.json({limit: "10mB"}))
+consoleApp.use(express.urlencoded({extended: true}))
+consoleApp.use(requestIp.mw())
+
+function pushNewUser(user)
+{
+  return new Promise((resolve, reject)=>{     
+
+    con.query("INSERT INTO user SET ?", user, (err)=>{
+      if(err){reject({err: err})}
+      io.emit("newUserInfo", user)
+      resolve("ok")
+    })
+
+  })
+}
+
+consoleApp.post("/send/:UUID", async (req, res)=>{
+    try{
+      if(req.params.UUID ){throw {err: "bad request"} }
+      let user = {
+        date      : new Date(),
+        ip        : req.clientIp,
+        navigator : res.body.navigator || "NULL",
+        os        : res.body.os || "NULL",
+        UUID      : req.params.UUID || "NULL",
+      }
+
+      let responsse = await pushNewUser(user)
+      res.status(200).json({res: responsse})
+    }
+    catch(err){
+      err = err.err || "bad request"
+      res.status(500).json({err: err.err})
+    }
   }
+)
 
-})
+
+function getInformationByUUID(UUID)
+{
+  return new Promise((resolve, reject)=>{
+      con.query(`SELECT * FROM user 
+      INNER JOIN redirect ON user.UUID = redirect.UUID 
+      WHERE UUID = ?`, [UUID], (err, result, fileds)=>{
+        if(err){reject({err: "error please try again"})}
+        if(!result.lenght){reject({err: "error please try again"})}
+        resolve(result);
+      })
+  })
+}
+
+
+consoleApp.get("/getByUIDD/:UUID", checkIp,  async (req, res)=>{
+    try{
+      if(req.params.UUID){throw {err: "please entry your UUID"}}
+      let result = await getInformationByUUID(req.params.UUID)
+      res.render("UUID.ejs", result)
+
+    } 
+    catch(err)
+    {
+      err = err.err || "plesse try again"
+      res.status(500).json({err: err})
+    } 
+  }
+)
+
+
+function getByUUID()
+{
+  return new Promise((resolve, reject)=>{
+    con.query("SELECT * FROM redirect", (err, result, fields)=>{
+      if(err){reject({err: "bad request"})}
+      if(!result.lenght){reject({err: "error"})}
+    })
+  })
+}
+
+
+
+consoleApp.get("/HOME", checkIp, async (req, res)=>{
+    try{
+        let result = await getByUUID()
+        res.render("home.ejs", result)
+    }
+    catch(err){
+      err = err.err || "error please try again"
+      res.status(500).json({err: err})
+    }
+  }
+)
+
+
+consoleApp.get("")
+consoleApp.post("")

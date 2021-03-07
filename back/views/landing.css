@@ -1,0 +1,103 @@
+
+
+
+
+/*
+
+BY JD
+
+
+*/
+
+.load
+{
+
+  position: absolute;
+  top: 50%;
+  left:50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  width: 200px;
+  height: 200px;
+
+}
+
+
+.rond
+{
+  display: block;
+  border-radius: 50%;
+  height: 50px;
+  width: 50px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+
+}
+
+.rond:nth-child(1)
+{
+  background-color:#19A68C;
+  transform: translate(25% , -125%);
+  animation: loader 2s ease infinite;
+}
+
+.rond:nth-child(2)
+{
+  background-color: #F63D3A;
+  transform: translate(25% , 25%);
+  animation: loader 2s -1500ms ease infinite;
+}
+
+.rond:nth-child(3)
+{
+  background-color: #FDA543;
+  transform: translate(-125% , 25%);
+  animation: loader 2s -1s ease infinite;
+}
+
+.rond:nth-child(4)
+{
+  background-color: #193B48;
+  transform: translate(-125% , -125%);
+  animation: loader 2s -2500ms ease infinite;
+}
+
+
+
+
+
+@keyframes loader
+{
+
+  0%
+  {
+    transform: translate(25% , -125%);
+  }
+
+  25%
+  {
+    transform: translate(25% , 25%);
+  }
+
+
+  50%
+  {
+    transform: translate(-125% , 25%);
+  }
+
+  75%
+  {
+    transform: translate(-125% , -125%);
+  }
+
+  100%
+  {
+    transform: translate(25% , -125%);
+  }
+
+
+
+
+}
