@@ -1,7 +1,7 @@
 
 
 {
-  "redirection" :
+  "redirect" :
   {
     "host": "name.xy",
     "port": 80,
@@ -10,6 +10,6 @@
   "console" : 
   {
     "host": "name.xy",
-    "port": 80;
+    "port": 333
   }
 }

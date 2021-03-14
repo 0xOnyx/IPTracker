@@ -2,7 +2,7 @@
 //////////////////////////////////
 //Configuration mysql
 
-const ft    = require("fs")
+const fs    = require("fs")
 const mysql = require("mysql")
 
 
@@ -22,7 +22,7 @@ let con = mysql.createConnection({
 
 
 con.connect((err)=>{
-  if(err){return console.error("MYSQL ERROR => " + err)},
+  if(err){return console.error("MYSQL ERROR => " + err)}
   console.log("MYSQL CONNNECTION => OK " )
 })
 

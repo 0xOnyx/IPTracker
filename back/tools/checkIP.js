@@ -1,17 +1,18 @@
 
 
 
-let ipAuth = new Map([
-    ["", 0],
-    ["", 0] 
-])
+let ipAuth = ["::1"]
 
 
 let checkIP = (req, res, next)=>{
-    if(!ipAuth.has(req.clientIp)){
-        res.status(43).json({err: "FORBIDDEN"})
+    console.log(req.clientIp)
+    if(!ipAuth.includes(req.clientIp)){
+        res.status(403).json({err: "FORBIDDEN"})
     }
     else{
         next()
     } 
 }
+
+
+exports.checkIp = checkIP
