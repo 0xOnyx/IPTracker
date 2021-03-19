@@ -92,6 +92,8 @@ redirectApp.all(async (req, res)=>{
 
 const {checkIp} = require("./tools/checkIP.js")
 
+const mysql     = require("mysql")
+
 consoleApp.use(express.json({limit: "10mB"}))
 consoleApp.use(express.urlencoded({extended: true}))
 consoleApp.use(requestIp.mw())
@@ -169,13 +171,16 @@ function getByUUID()
   return new Promise((resolve, reject)=>{
     con.query("SELECT * FROM redirect", (err, result, fields)=>{
       if(err){reject({err: "bad request"})}
-      if(!result.lenght){reject({err: "error"})}
+      if(result.lenght){reject({err: "error"})}
       resolve(result)
     })
   })
 }
 
 
+consoleApp.get("/", checkIp, async(req, res)=>{
+  res.redirect("/HOME")
+})
 
 consoleApp.get("/HOME", checkIp, async (req, res)=>{
     try{
@@ -184,6 +189,7 @@ consoleApp.get("/HOME", checkIp, async (req, res)=>{
     }
     catch(err){
       err = err.err || "error please try again"
+      console.log(err)
       res.status(500).json({err: err})
     }
   }
@@ -216,52 +222,66 @@ consoleApp.get("/create", checkIp, async(req, res)=>{
 
 */
 
-function createUrl(options)
+function createUrl(create)
 {
+  console.log("enter in the create url");
   return new Promise((resolve, reject)=>{
+    
+    let uuid = uuidv4()
+
     let insert = {
-        FROM_URL  : options.CustomURL,
-        TO_URL    : options.Link,
-        ENDTIME   : options.Time,
-        UUID      : uuidv4(),
+        FROM_URL  : create.CustomURL,
+        TO_URL    : create.Link,
+        ENDTIME   : create.Time,
+        UUID      : uuid
     }
 
     con.query("INSERT INTO redirect SET ?", insert, (err)=>{
-      if(err){reject({err: "please try again"})}
-      resolve(insert.UUID)
+      if(err){
+        console.log("mysql error")
+        reject({err: "please try again"})
+      }
+      resolve(insert)
     })
-  }
-
+    
+  })
 }
 
-consoleApp.post("/create/links", checkIp, async(req)=>{
+consoleApp.post("/create/links", checkIp, async(req, res)=>{
     try{
-      if(!L_Link || !L_CustomURL)
-        {throw {err: "bad request"}}
+      console.log("requete -- >")
+      console.log(req.body)
 
+      if(!req.body.L_Link || !req.body.L_CustomURL)
+        {
+          throw {err: "bad request"}
+        }
+
+      let date = new Date()
+      
       if(!req.body.L_Time)
       {
-        let date = new Date()
-
-        date.setDate(date.getDate() + req.body.L_Time)
+        date.setDate(date.getDate() + 1)  
       }
+
+        date.setDate(date.getDate() + Number(req.body.L_Time) )
 
         let create = {
           Link: req.body.L_Link,
-          CustomURL: req.body.CustomURL,
+          CustomURL: req.body.L_CustomURL,
           Time: date,
-          options: {
+          /*options: {
             cam: req.body.L_came ? True : False,
             gps: req.body.L_gps  ? True : False,
             dehashed: req.body.L_dehashed  ? True : False,
             file: req.body.file  ? True : False,
-          }
+          }*/
 
          }
 
-         let UUID = await createUrl(options)
+         let UUID = await createUrl(create)
 
-         res.render("YourCode.ejs")
+         res.render("YourCode.ejs", UUID)
 
     }
     catch(err){
@@ -269,5 +289,4 @@ consoleApp.post("/create/links", checkIp, async(req)=>{
       res.status(500).json({err: err})
     }
 })
-
 

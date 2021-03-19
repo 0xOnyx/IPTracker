@@ -1,15 +1,11 @@
-
-
 {
-  "redirect" :
-  {
+  "redirect": {
     "host": "name.xy",
-    "port": 80,
+    "port": 3120,
     "default": "https://google.ch"
   },
-  "console" : 
-  {
+  "console": {
     "host": "name.xy",
-    "port": 333
+    "port": 3290
   }
 }

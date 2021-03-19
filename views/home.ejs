@@ -1,0 +1,34 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8" />
+      <link rel="stylesheet" href="/static/home.css" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <title>Home</title>
+    </head>
+
+    <body>
+        <h1>| IP Logger |</h1>
+        <h1>|  CONSOLE  |</h1>
+
+        
+        <div>
+            <ul id="list">
+
+                <% for(let i = 0; i < all.length; i++){%>
+                    <li>
+                        <p>FROM_URL => <span><%= JSON.stringify(all[i].FROM_URL) %></span></p>    
+                        <p>TO_URL =>   <span><%= JSON.stringify(all[i].TO_URL) %>  </span></p>
+                        <p>UUID =>     <span><%= JSON.stringify(all[i].UUID) %>    </span></p>
+                        <p>ENDTIME =>  <span><%= JSON.stringify(all[i].ENDTIME) %> </span></p>
+                        <a href=<%= /getByUIDD/ +  all[i].UUID %>>GO</a>
+                    </li>    
+                <% } %>
+            </ul>
+        </div>
+    </body>
+</html>
+
+
