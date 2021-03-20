@@ -3,16 +3,56 @@
 <html lang="fr">
     <head>
         <meta charset="utf-8" />
-        <link rel="stylesheet" href="/static/style.css" />
+      <link rel="stylesheet" href="/static/home.css" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="java.js"></script>
+        <script src="/socket.io/socket.io.js"></script>       
         <title>UUID</title>
     </head>
 
     <body>
+        <h1>| IP Logger |</h1>
+        <h1>|  UUID  |</h1>
+
+        
+        <div>
+            <ul id="list">
+<!---
+ALL =>
+    id: 9,
+    IP: '::ffff:192.168.1.202',
+    Naviguator: '5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36',
+    GPS: '',
+    OS: 'Linux x86_64',
+    UUID: 'ab278ef5-3ff9-4624-a99a-959469d9e719',
+    Date: 2021-03-20T11:49:09.000Z,
+    FROM_URL: '/test/test',
+    TO_URL: 'http://test.com',
+    ENDTIME: 2021-03-20T18:27:56.000Z,
+    TIME: 1000
+-->
+                <% for(let i = 0; i < all.length; i++){%>
+                    <li>
+                        <p>IP =>     <span><%= JSON.stringify(all[i].IP) %></span></p>
+                        <p>OS =>     <span><%=JSON.stringify(all[i].OS)%></span></p>
+                        <p>FROM_URL => <span><%= JSON.stringify(all[i].FROM_URL) %></span></p>    
+                        <p>TO_URL =>   <span><%= JSON.stringify(all[i].TO_URL) %>  </span></p>
+                        <p>Date =>     <span><%= JSON.stringify(all[i].Date) %></span></p>
+                        <p>Navigator =>     <span><%= JSON.stringify(all[i].Naviguator) %></span></p>
+                    </li>    
+                <% } %>
+            </ul>
+        </div>
+
+        <script>
+            let host = <%- JSON.stringify(host) %>
+            let port = <%- JSON.stringify(port) %>
+            let UUID = <%- JSON.stringify(UUID) %>
+            
+        </script>
+
+        <script src="/static/UUID.js"></script>
 
     </body>
 </html>
-
 
 

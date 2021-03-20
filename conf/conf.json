@@ -1,7 +1,7 @@
 {
   "user"    : "ext",
   "password": "MTIzNDU2Nw==",
-  "host"    : "8.tcp.ngrok.io",
+  "host"    : "localhost",
   "database": "tracker",
-  "port"    : 11625 
+  "port"    : 3306 
 }
